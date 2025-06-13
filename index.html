@@ -5,54 +5,42 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Quiz Interactivo - Ciberseguridad</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    .respuesta-correcta {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+      color: #155724;
+    }
+    .respuesta-incorrecta {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+      color: #721c24;
+    }
+    .btn-opcion {
+      width: 100%;
+      margin: 4px 0;
+    }
+  </style>
 </head>
 <body class="bg-light">
   <div class="container mt-5">
     <h1 class="text-center mb-4">Quiz Interactivo - Monitorización y Respuesta</h1>
 
     <form id="quizForm">
-      <div class="card p-4 mb-4">
+      <div class="card p-4 mb-4" id="pregunta1">
         <h5><strong>1. ¿Qué tipo de firewall analiza tanto la cabecera como el contenido del paquete?</strong></h5>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p1" value="a" id="p1a">
-          <label class="form-check-label" for="p1a">Filtrado de paquetes</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p1" value="b" id="p1b">
-          <label class="form-check-label" for="p1b">Stateful</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p1" value="c" id="p1c">
-          <label class="form-check-label" for="p1c">Deep Packet Inspection</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p1" value="d" id="p1d">
-          <label class="form-check-label" for="p1d">Proxy NAT</label>
-        </div>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p1', 'a', this)">Filtrado de paquetes</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p1', 'b', this)">Stateful</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p1', 'c', this)">Deep Packet Inspection</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p1', 'd', this)">Proxy NAT</button>
       </div>
 
-      <div class="card p-4 mb-4">
+      <div class="card p-4 mb-4" id="pregunta2">
         <h5><strong>2. ¿Qué componente automatiza tareas y orquesta respuestas ante incidentes?</strong></h5>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p2" value="a" id="p2a">
-          <label class="form-check-label" for="p2a">SIEM</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p2" value="b" id="p2b">
-          <label class="form-check-label" for="p2b">EDR</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p2" value="c" id="p2c">
-          <label class="form-check-label" for="p2c">SOAR</label>
-        </div>
-        <div class="form-check">
-          <input class="form-check-input" type="radio" name="p2" value="d" id="p2d">
-          <label class="form-check-label" for="p2d">CASB</label>
-        </div>
-      </div>
-
-      <div class="text-center">
-        <button type="button" class="btn btn-primary" onclick="calcularResultados()">Enviar respuestas</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p2', 'a', this)">SIEM</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p2', 'b', this)">EDR</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p2', 'c', this)">SOAR</button>
+        <button type="button" class="btn btn-outline-secondary btn-opcion" onclick="responder('p2', 'd', this)">CASB</button>
       </div>
     </form>
 
@@ -60,23 +48,65 @@
   </div>
 
   <script>
-    function calcularResultados() {
-      const respuestasCorrectas = {
-        p1: 'c',
-        p2: 'c'
-      };
-      let score = 0;
-      let total = Object.keys(respuestasCorrectas).length;
+    const respuestasCorrectas = {
+      p1: 'c',
+      p2: 'c'
+    };
+    const respuestasUsuario = {};
 
-      for (let key in respuestasCorrectas) {
-        const radios = document.getElementsByName(key);
-        for (const radio of radios) {
-          if (radio.checked && radio.value === respuestasCorrectas[key]) {
-            score++;
+    function responder(pregunta, respuesta, boton) {
+      // Desactivar todos los botones de la pregunta
+      const botones = boton.parentElement.querySelectorAll('button');
+      botones.forEach(b => {
+        b.disabled = true;
+        b.classList.remove('respuesta-correcta', 'respuesta-incorrecta');
+      });
+
+      // Guardar respuesta del usuario
+      respuestasUsuario[pregunta] = respuesta;
+
+      // Marcar como correcta o incorrecta
+      if (respuesta === respuestasCorrectas[pregunta]) {
+        boton.classList.add('btn-success', 'respuesta-correcta');
+      } else {
+        boton.classList.add('btn-danger', 'respuesta-incorrecta');
+        // también resalta la correcta
+        botones.forEach(b => {
+          if (b.textContent === obtenerTextoCorrecto(pregunta)) {
+            b.classList.add('btn-success', 'respuesta-correcta');
           }
-        }
+        });
       }
 
+      mostrarResultado();
+    }
+
+    function obtenerTextoCorrecto(pregunta) {
+      const opciones = {
+        p1: {
+          a: 'Filtrado de paquetes',
+          b: 'Stateful',
+          c: 'Deep Packet Inspection',
+          d: 'Proxy NAT'
+        },
+        p2: {
+          a: 'SIEM',
+          b: 'EDR',
+          c: 'SOAR',
+          d: 'CASB'
+        }
+      };
+      return opciones[pregunta][respuestasCorrectas[pregunta]];
+    }
+
+    function mostrarResultado() {
+      let score = 0;
+      for (let key in respuestasCorrectas) {
+        if (respuestasUsuario[key] === respuestasCorrectas[key]) {
+          score++;
+        }
+      }
+      const total = Object.keys(respuestasCorrectas).length;
       document.getElementById("resultado").textContent = `Has acertado ${score} de ${total} preguntas.`;
     }
   </script>
